@@ -10,7 +10,7 @@
 body {
   height: auto;
   width: 100vw;
-  background-color: #10daff;
+  background-color: white;
   color: #333333;
   overflow-y: hidden;
   display: flex;
@@ -28,8 +28,8 @@ body {
 }
 
 .image-container img{
-  height: 300px;
-  width: 300px;
+  height: 270px;
+  width: 1300px;
 }
 
 .name-container {
@@ -43,6 +43,7 @@ body {
 #p1 {
   font-size: 22px;
   font-weight: 500;
+  text-transform: uppercase;
 }
 
 #p2 {
