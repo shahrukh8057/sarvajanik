@@ -29,7 +29,7 @@ body {
 
 .image-container img{
   height: 270px;
-  width: 1300px;
+  width: 400px;
 }
 
 .name-container {
@@ -132,6 +132,7 @@ footer {
     font-size: 10px;
     margin-top: 2px;
   }
+
 
   .view-pdf{
       display: flex;
