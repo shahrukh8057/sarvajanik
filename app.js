@@ -6,6 +6,7 @@ const path = require('path');
 const multer = require('multer');
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const util = require('util');
 const { mongoose } = require('./config/mongoose');
 const File = require('./modal/fileSchema');
 // const pdfjsLib = require('pdfjs-dist');
@@ -57,40 +58,77 @@ app.get('/uploadpdf', function (req, res) {
 });
 
 // Handle file upload
+// app.post('/upload-pdf', upload.single('pdf-file'), async function (req, res) {
+//   if (req.file) {
+//     const fileContent = fs.readFileSync(req.file.path);
+
+//     const params = {
+//       Bucket: process.env.AWS_BUCKET_NAME,
+//       Key: req.file.filename,
+//       Body: fileContent,
+//     };
+
+//     // Upload the file to S3
+//     s3.upload(params, async function (err, data) {
+//       if (err) {
+//         console.error('Error uploading file to S3:', err);
+//         res.status(500).send('Error uploading file');
+//       } else {
+//         // File uploaded successfully
+//         const fileNameWithExtension = req.file.originalname;
+//         const fileName = path.parse(fileNameWithExtension).name;
+//         const s3ObjectName = req.file.filename;
+
+//         const newFile = new File({ filename: fileName, s3ObjectName: s3ObjectName });
+//         try {
+//           await newFile.save();
+//           console.log('Filename saved to MongoDB');
+//         } catch (error) {
+//           console.error('Failed to save filename to MongoDB', error);
+//         }
+//         res.send('File uploaded');
+//       }
+//     });
+//   } else {
+//     // Error uploading file
+//     console.error('Error uploading file:', req.fileValidationError);
+//     res.status(500).send('Error uploading file');
+//   }
+// });
+
 app.post('/upload-pdf', upload.single('pdf-file'), async function (req, res) {
-  if (req.file) {
-    const fileContent = fs.readFileSync(req.file.path);
+  try {
+    if (req.file) {
+      const fileContent = fs.readFileSync(req.file.path);
 
-    const params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: req.file.filename,
-      Body: fileContent,
-    };
+      const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: req.file.filename,
+        Body: fileContent,
+      };
 
-    // Upload the file to S3
-    s3.upload(params, async function (err, data) {
-      if (err) {
-        console.error('Error uploading file to S3:', err);
-        res.status(500).send('Error uploading file');
-      } else {
-        // File uploaded successfully
-        const fileNameWithExtension = req.file.originalname;
-        const fileName = path.parse(fileNameWithExtension).name;
-        const s3ObjectName = req.file.filename;
+      // Upload the file to S3
+      const s3Upload = util.promisify(s3.upload).bind(s3);
+      const s3UploadResult = await s3Upload(params);
 
-        const newFile = new File({ filename: fileName, s3ObjectName: s3ObjectName });
-        try {
-          await newFile.save();
-          console.log('Filename saved to MongoDB');
-        } catch (error) {
-          console.error('Failed to save filename to MongoDB', error);
-        }
-        res.send('File uploaded');
-      }
-    });
-  } else {
-    // Error uploading file
-    console.error('Error uploading file:', req.fileValidationError);
+      // File uploaded successfully
+      const fileNameWithExtension = req.file.originalname;
+      const fileName = path.parse(fileNameWithExtension).name;
+      const s3ObjectName = req.file.filename;
+
+      const newFile = new File({ filename: fileName, s3ObjectName: s3ObjectName });
+
+      await newFile.save();
+      console.log('Filename saved to MongoDB');
+
+      res.send('File uploaded');
+    } else {
+      // Error uploading file
+      console.error('Error uploading file:', req.fileValidationError);
+      res.status(500).send('Error uploading file');
+    }
+  } catch (error) {
+    console.error('Failed to upload file to S3 or save filename to MongoDB', error);
     res.status(500).send('Error uploading file');
   }
 });
