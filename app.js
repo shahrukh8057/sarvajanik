@@ -58,112 +58,43 @@ app.get('/uploadpdf', function (req, res) {
 });
 
 // Handle file upload
-// app.post('/upload-pdf', upload.single('pdf-file'), async function (req, res) {
-//   if (req.file) {
-//     const fileContent = fs.readFileSync(req.file.path);
-
-//     const params = {
-//       Bucket: process.env.AWS_BUCKET_NAME,
-//       Key: req.file.filename,
-//       Body: fileContent,
-//     };
-
-//     // Upload the file to S3
-//     s3.upload(params, async function (err, data) {
-//       if (err) {
-//         console.error('Error uploading file to S3:', err);
-//         res.status(500).send('Error uploading file');
-//       } else {
-//         // File uploaded successfully
-//         const fileNameWithExtension = req.file.originalname;
-//         const fileName = path.parse(fileNameWithExtension).name;
-//         const s3ObjectName = req.file.filename;
-
-//         const newFile = new File({ filename: fileName, s3ObjectName: s3ObjectName });
-//         try {
-//           await newFile.save();
-//           console.log('Filename saved to MongoDB');
-//         } catch (error) {
-//           console.error('Failed to save filename to MongoDB', error);
-//         }
-//         res.send('File uploaded');
-//       }
-//     });
-//   } else {
-//     // Error uploading file
-//     console.error('Error uploading file:', req.fileValidationError);
-//     res.status(500).send('Error uploading file');
-//   }
-// });
-
 app.post('/upload-pdf', upload.single('pdf-file'), async function (req, res) {
-  try {
-    if (req.file) {
-      const fileContent = fs.readFileSync(req.file.path);
+  if (req.file) {
+    const fileContent = fs.readFileSync(req.file.path);
 
-      const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: req.file.filename,
-        Body: fileContent,
-      };
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: req.file.filename,
+      Body: fileContent,
+    };
 
-      // Upload the file to S3
-      const s3Upload = util.promisify(s3.upload).bind(s3);
-      const s3UploadResult = await s3Upload(params);
+    // Upload the file to S3
+    s3.upload(params, async function (err, data) {
+      if (err) {
+        console.error('Error uploading file to S3:', err);
+        res.status(500).send('Error uploading file');
+      } else {
+        // File uploaded successfully
+        const fileNameWithExtension = req.file.originalname;
+        const fileName = path.parse(fileNameWithExtension).name;
+        const s3ObjectName = req.file.filename;
 
-      // File uploaded successfully
-      const fileNameWithExtension = req.file.originalname;
-      const fileName = path.parse(fileNameWithExtension).name;
-      const s3ObjectName = req.file.filename;
-
-      const newFile = new File({ filename: fileName, s3ObjectName: s3ObjectName });
-
-      await newFile.save();
-      console.log('Filename saved to MongoDB');
-
-      res.send('File uploaded');
-    } else {
-      // Error uploading file
-      console.error('Error uploading file:', req.fileValidationError);
-      res.status(500).send('Error uploading file');
-    }
-  } catch (error) {
-    console.error('Failed to upload file to S3 or save filename to MongoDB', error);
+        const newFile = new File({ filename: fileName, s3ObjectName: s3ObjectName });
+        try {
+          await newFile.save();
+          console.log('Filename saved to MongoDB');
+        } catch (error) {
+          console.error('Failed to save filename to MongoDB', error);
+        }
+        res.send('File uploaded');
+      }
+    });
+  } else {
+    // Error uploading file
+    console.error('Error uploading file:', req.fileValidationError);
     res.status(500).send('Error uploading file');
   }
 });
-
-//Render the PDF viewer page
-// app.post('/result', async function (req, res) {
-//   const searchFilename = req.body['search-result'];
-//   try {
-//     const file = await File.findOne({ filename: searchFilename });
-//     if (!file) {
-//       console.error('File not found in MongoDB:', searchFilename);
-//       res.status(404).send('File not found');
-//       return;
-//     }
-
-//     const params = {
-//       Bucket: process.env.AWS_BUCKET_NAME, // Make sure AWS_BUCKET_NAME is set correctly
-//       Key: file.s3ObjectName,
-//     };
-
-//     // Retrieve the file from S3
-//     const fileStream = s3.getObject(params).createReadStream();
-//     fileStream.on('error', (err) => {
-//       console.error('Error streaming file from S3:', err);
-//       res.status(500).send('Error streaming file');
-//     });
-
-//     res.setHeader('Content-Type', 'application/pdf');
-//     fileStream.pipe(res);
-//   } catch (error) {
-//     console.error('Error retrieving file from MongoDB:', error);
-//     res.status(500).send('Error retrieving file');
-//   }
-// });
-
 
 app.post('/result', async function (req, res) {
   const searchFilename = req.body['search-result'];

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const DB = "mongodb+srv://abhishekit365:Sunny123@jayramiti.a9oaeji.mongodb.net/JayRamIti?retryWrites=true&w=majority"
 
+
 mongoose.connect(DB).then(()=>{
     console.log("DataBase Connection SuccessFull")
 }).catch((err)=>console.log("No Connection Sonething Error"+err));
